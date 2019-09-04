@@ -16,6 +16,8 @@ class Player {
 
         ArrayList<Bomb> bombs = new ArrayList<>();
 
+        ArrayList<Item> items = new ArrayList<Item>();
+
         Scanner in = new Scanner(System.in);
         int width = in.nextInt();
         int height = in.nextInt();
@@ -47,9 +49,12 @@ class Player {
                     if(owner == myId){
                         currentPosition = new Point(x,y);
                     }
-                } else {
+                } else if(entityType == 1) {
                     //Bomb
                     bombs.add(new Bomb(x, y, param1, owner, param2));
+                }
+                else{
+                    items.add(new Item(x,y, param1));
                 }
             }
 
@@ -58,7 +63,7 @@ class Player {
             System.err.println(currentPosition);
             for(Point p : map.keySet()){
                 if(map.get(p).equals(FieldType.Emtpy)){
-                    int currentScore = willDestroyNBoxs(new Bomb(p.x, p.y,8,0 , 3), map); // * (10 / distanceToCoordinate(p, currentPosition));
+                    int currentScore = willDestroyNBoxs(new Bomb(p.x, p.y,8,0 , 3), map) * (int) Math.round(100d / distanceToCoordinate(p, currentPosition));
                     if(currentScore > score){
                         pointToPlace = p;
                         score = currentScore;
@@ -145,6 +150,30 @@ class Bomb {
 
     public int getExplosionrange() {
         return explosionrange;
+    }
+}
+
+class Item{
+    private int x;
+    private int y;
+    private int itemType;
+
+    public Item(int x, int y, int itemType) {
+        this.x = x;
+        this.y = y;
+        this.itemType = itemType;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public int getItemType() {
+        return itemType;
     }
 }
 
