@@ -88,17 +88,17 @@ class Player {
         }
     }
 
-    public static int willDestroyNBoxs(Bomb bomb, Map<Point, FieldType> map){
+    public static int willDestroyNBoxs(Bomb bomb, Map<Point, FieldType> map) {
         int destroyedBoxes = 0;
         for (int i = bomb.getX() - bomb.getExplosionrange(); i < bomb.getX() + bomb.getExplosionrange(); i++) {
             Point p = new Point(i, bomb.getY());
-            if(map.containsKey(p) && map.get(p).equals(FieldType.Box)){
+            if (map.containsKey(p) && map.get(p).equals(FieldType.Box)) {
                 destroyedBoxes++;
             }
         }
         for (int i = bomb.getY() - bomb.getExplosionrange(); i < bomb.getY() + bomb.getExplosionrange(); i++) {
             Point p = new Point(bomb.getX(), i);
-            if(map.containsKey(p) && map.get(p).equals(FieldType.Box)){
+            if (map.containsKey(p) && map.get(p).equals(FieldType.Box)) {
                 destroyedBoxes++;
             }
         }
@@ -185,6 +185,60 @@ class Item{
         return itemType;
     }
 }
+
+class FloodFill {
+
+    public Integer numberOfFreeFields(Map<Point, Integer> map, Point player) {
+        Map<Point, Integer> mapClone = new HashMap<>();
+        mapClone.putAll(map);
+        return floodfill(mapClone, -1, -2, player, 0);
+    }
+
+    private int floodfill(Map<Point, Integer> map, int colorToReplace, int colorToPaint, Point p, int replaces) {
+        if (map != null && map.containsKey(p)) {
+            int currentColor = map.get(p);
+            if (currentColor == colorToReplace) {
+                map.put(p, colorToPaint);
+                replaces++;
+                replaces = floodfill(map, colorToReplace, colorToPaint, new Point(p.x + 1, p.y), replaces);
+                replaces = floodfill(map, colorToReplace, colorToPaint, new Point(p.x - 1, p.y), replaces);
+                replaces = floodfill(map, colorToReplace, colorToPaint, new Point(p.x, p.y + 1), replaces);
+                replaces = floodfill(map, colorToReplace, colorToPaint, new Point(p.x, p.y - 1), replaces);
+            }
+        }
+        return replaces;
+    }
+
+    public boolean containsEnemyPoint(Map<Point, Integer> map, Point player, Point enemy) {
+        Map<Point, Integer> mapClone = new HashMap<>();
+        mapClone.putAll(map);
+        mapClone.put(player, -1);
+        return getMap(mapClone, -1, -2, player, enemy, false);
+    }
+
+
+    private boolean getMap(Map<Point, Integer> map, int colorToReplace, int colorToPaint, Point p, Point enemy, boolean hasEnemy) {
+        if (hasEnemy)
+            return true;
+        if (map != null && map.containsKey(p)) {
+            if (p.equals(enemy)) return true;
+            int currentColor = map.get(p);
+            if (currentColor == colorToReplace) {
+                map.put(p, colorToPaint);
+                if (getMap(map, colorToReplace, colorToPaint, new Point(p.x + 1, p.y), enemy, hasEnemy))
+                    hasEnemy = true;
+                if (getMap(map, colorToReplace, colorToPaint, new Point(p.x - 1, p.y), enemy, hasEnemy))
+                    hasEnemy = true;
+                if (getMap(map, colorToReplace, colorToPaint, new Point(p.x, p.y + 1), enemy, hasEnemy))
+                    hasEnemy = true;
+                if (getMap(map, colorToReplace, colorToPaint, new Point(p.x, p.y - 1), enemy, hasEnemy))
+                    hasEnemy = true;
+            }
+        }
+        return hasEnemy;
+    }
+}
+
 
 enum FieldType {
     Emtpy,
