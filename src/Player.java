@@ -9,14 +9,12 @@ import java.math.*;
  **/
 class Player {
 
-
-
     public static void main(String args[]) {
         Map<Point, FieldType> map = new HashMap<>();
 
-        ArrayList<BomberMan> players = new ArrayList<BomberMan>();
+        ArrayList<BomberMan> players = new ArrayList<>();
 
-        ArrayList<Bomb> bombs = new ArrayList<Bomb>();
+        ArrayList<Bomb> bombs = new ArrayList<>();
 
         Scanner in = new Scanner(System.in);
         int width = in.nextInt();
@@ -27,7 +25,7 @@ class Player {
         while (true) {
             for (int i = 0; i < height; i++) {
                 String row = in.next();
-                for(int j = 0; j < row.length(); j++){
+                for (int j = 0; j < row.length(); j++) {
                     map.put(new Point(j, i), row.charAt(j) == '.' ? FieldType.Emtpy : FieldType.Box);
                 }
             }
@@ -42,13 +40,12 @@ class Player {
                 int param1 = in.nextInt();
                 int param2 = in.nextInt();
 
-                if(entityType == 0){
+                if (entityType == 0) {
                     //Player
-                    players.add(new BomberMan(x,y,owner, param1));
-                }
-                else{
+                    players.add(new BomberMan(x, y, owner, param1));
+                } else {
                     //Bomb
-                    bombs.add(new Bomb(x,y,param1,owner, param2));
+                    bombs.add(new Bomb(x, y, param1, owner, param2));
                 }
             }
 
@@ -60,7 +57,7 @@ class Player {
     }
 }
 
-class BomberMan{
+class BomberMan {
     int x;
     int y;
     int id;
