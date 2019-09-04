@@ -55,11 +55,14 @@ class Player {
 
             Point pointToPlace = null;
             int score = Integer.MIN_VALUE;
+            System.err.println(currentPosition);
             for(Point p : map.keySet()){
                 if(map.get(p).equals(FieldType.Emtpy)){
-                    int currentScore = willDestroyNBoxs(new Bomb(p.x, p.y,8,0 , 3), map) * (int) p.distance(currentPosition);
+                    int currentScore = willDestroyNBoxs(new Bomb(p.x, p.y,8,0 , 3), map); // * (10 / distanceToCoordinate(p, currentPosition));
                     if(currentScore > score){
                         pointToPlace = p;
+                        score = currentScore;
+                        //System.err.println(pointToPlace);
                     }
                 }
             }
@@ -88,7 +91,7 @@ class Player {
         return destroyedBoxes;
     }
 
-    private int distanceToCoordinate (Point point1, Point point2) {
+    private static int distanceToCoordinate (Point point1, Point point2) {
         int xWert = Math.abs(point1.x) - Math.abs(point2.x);
         int yWert = Math.abs(point1.y) - Math.abs(point2.y);
         return xWert + yWert;
