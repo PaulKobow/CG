@@ -28,7 +28,16 @@ class Player {
             for (int i = 0; i < height; i++) {
                 String row = in.next();
                 for (int j = 0; j < row.length(); j++) {
-                    map.put(new Point(j, i), row.charAt(j) == '.' ? FieldType.Emtpy : FieldType.Box);
+                    if(row.charAt(j) == '0'){
+                        map.put(new Point(j, i), FieldType.Box);
+                    }
+                    else if(row.charAt(j) == 'x'){
+                        map.put(new Point(j, i), FieldType.Wall);
+                    }
+                    else{
+                        map.put(new Point(j, i), FieldType.Emtpy);
+                    }
+                    //map.put(new Point(j, i), row.charAt(j) == '.' ? FieldType.Emtpy : FieldType.Box);
                 }
             }
             int entities = in.nextInt();
@@ -179,5 +188,6 @@ class Item{
 
 enum FieldType {
     Emtpy,
-    Box
+    Box,
+    Wall
 }
