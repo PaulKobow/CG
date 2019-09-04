@@ -32,6 +32,7 @@ class Player {
             int entities = in.nextInt();
             players.clear();
             bombs.clear();
+            Point currentPosition = new Point (0,0);
             for (int i = 0; i < entities; i++) {
                 int entityType = in.nextInt();
                 int owner = in.nextInt();
@@ -43,20 +44,34 @@ class Player {
                 if (entityType == 0) {
                     //Player
                     players.add(new BomberMan(x, y, owner, param1));
+                    if(owner == myId){
+                        currentPosition = new Point(x,y);
+                    }
                 } else {
                     //Bomb
                     bombs.add(new Bomb(x, y, param1, owner, param2));
                 }
             }
 
+            Point pointToPlace = null;
+            int score = Integer.MIN_VALUE;
+            for(Point p : map.keySet()){
+                if(map.get(p).equals(FieldType.Emtpy)){
+                    int currentScore = willDestroyNBoxs(new Bomb(p.x, p.y,8,0 , 3), map) * (int) p.distance(currentPosition);
+                    if(currentScore > score){
+                        pointToPlace = p;
+                    }
+                }
+            }
+
             // Write an action using System.out.println()
             // To debug: System.err.println("Debug messages...");
 
-            System.out.println("BOMB 6 5");
+            System.out.println("BOMB "+pointToPlace.x+" "+pointToPlace.y);
         }
     }
 
-    public int  willDestroyNBoxs(Bomb bomb, Map<Point, FieldType> map){
+    public static int willDestroyNBoxs(Bomb bomb, Map<Point, FieldType> map){
         int destroyedBoxes = 0;
         for (int i = bomb.getX() - bomb.getExplosionrange(); i < bomb.getX() + bomb.getExplosionrange(); i++) {
             Point p = new Point(i, bomb.getY());
