@@ -55,6 +55,24 @@ class Player {
             System.out.println("BOMB 6 5");
         }
     }
+
+    public int  willDestroyNBoxs(Bomb bomb, Map<Point, FieldType> map){
+        int destroyedBoxes = 0;
+        for (int i = bomb.getX() - bomb.getExplosionrange(); i < bomb.getX() + bomb.getExplosionrange(); i++) {
+            Point p = new Point(i, bomb.getY());
+            if(map.containsKey(p) && map.get(p).equals(FieldType.Box)){
+                destroyedBoxes++;
+            }
+        }
+        for (int i = bomb.getY() - bomb.getExplosionrange(); i < bomb.getY() + bomb.getExplosionrange(); i++) {
+            Point p = new Point(bomb.getX(), i);
+            if(map.containsKey(p) && map.get(p).equals(FieldType.Box)){
+                destroyedBoxes++;
+            }
+        }
+        return destroyedBoxes;
+    }
+
 }
 
 class BomberMan {
@@ -84,6 +102,26 @@ class Bomb {
         this.timer = timer;
         this.owner = owner;
         this.explosionrange = explosionRange;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public int getTimer() {
+        return timer;
+    }
+
+    public int getOwner() {
+        return owner;
+    }
+
+    public int getExplosionrange() {
+        return explosionrange;
     }
 }
 
