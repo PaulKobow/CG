@@ -73,6 +73,11 @@ class Player {
         return destroyedBoxes;
     }
 
+    private int distanceToCoordinate (Point point1, Point point2) {
+        int xWert = Math.abs(point1.x) - Math.abs(point2.x);
+        int yWert = Math.abs(point1.y) - Math.abs(point2.y);
+        return xWert + yWert;
+    }
 }
 
 class BomberMan {
