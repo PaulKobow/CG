@@ -31,7 +31,7 @@ class Player {
                     if(row.charAt(j) == '0'){
                         map.put(new Point(j, i), FieldType.Box);
                     }
-                    else if(row.charAt(j) == 'x'){
+                    else if(row.charAt(j) == 'X'){
                         map.put(new Point(j, i), FieldType.Wall);
                     }
                     else{
@@ -56,6 +56,7 @@ class Player {
                     //Player
                     players.add(new BomberMan(x, y, owner, param1));
                     if(owner == myId){
+                        System.err.println("MOVED TO "+x+":"+y);
                         currentPosition = new Point(x,y);
                     }
                 } else if(entityType == 1) {
@@ -67,36 +68,83 @@ class Player {
                 }
             }
 
+            FloodFill f = new FloodFill();
+            Map<Point, FieldType> mapCopy = new HashMap<>(map);
+            ArrayList<Point> reachablePoints = f.getConnectedPoints(mapCopy, FieldType.Emtpy, currentPosition);
+
+            reachablePoints.remove(currentPosition);
+
+            boolean ownBomb = false;
+            for(Bomb b : bombs){
+                Iterator<Point> p = reachablePoints.iterator();
+                while(p.hasNext()){
+                    Point point = p.next();
+                    if(b.isInRange(point))
+                        p.remove();
+                    if(b.getOwner() == myId)
+                        ownBomb = true;
+                }
+
+            }
+
+            System.err.println(reachablePoints);
+
             Point pointToPlace = null;
-            int score = Integer.MIN_VALUE;
-            System.err.println(currentPosition);
-            for(Point p : map.keySet()){
-                if(map.get(p).equals(FieldType.Emtpy)){
-                    int currentScore = willDestroyNBoxs(new Bomb(p.x, p.y,8,0 , 3), map) * (int) Math.round(100d / distanceToCoordinate(p, currentPosition));
-                    if(currentScore > score){
-                        pointToPlace = p;
-                        score = currentScore;
-                        //System.err.println(pointToPlace);
-                    }
+            double score = 0;
+            for(Point p : reachablePoints) {
+                double currentScore = calculateScore(map, items, bombs, currentPosition, p);
+                if(currentScore > score){
+                    pointToPlace = p;
+                    score = currentScore;
                 }
             }
 
-            // Write an action using System.out.println()
-            // To debug: System.err.println("Debug messages...");
 
-            System.out.println("BOMB "+pointToPlace.x+" "+pointToPlace.y);
+            if(pointToPlace == null || ownBomb){
+                Point finalCurrentPosition = currentPosition;
+                Point p = reachablePoints.stream().min(Comparator.comparingInt(a -> distanceToCoordinate(finalCurrentPosition, a))).orElseGet(() -> new Point(0,0));
+                p = reachablePoints.get(0);
+                System.err.println("MOVING TO "+p);
+                System.out.println("MOVE "+(int) p.x+" "+(int) p.y);
+            }
+            else {
+                System.err.println("BOMBING "+pointToPlace);
+                System.out.println("BOMB " + pointToPlace.x + " " + pointToPlace.y);
+            }
+
         }
+    }
+
+    public static double calculateScore(Map<Point, FieldType> map, ArrayList<Item> items, ArrayList<Bomb> bombs, Point player, Point pointToCalculate){
+        for(Bomb b : bombs){
+            //TODO If in explosionRange
+            if(b.isInRange(player))
+                return  -1;
+        }
+        //Todo also calculate other bombs --> will we destroy first?
+        int destroyingBoxes = willDestroyNBoxs(new Bomb(pointToCalculate.x,pointToCalculate.y,8, 0,3), map);
+        int distance = distanceToCoordinate(player, pointToCalculate);
+        //TODO get a score for the path based on the number of items collectable
+        int pathValueBasedOnItems = 1;
+        for(Item item : items){
+            if(item.getX() == pointToCalculate.getX() && item.getY() == pointToCalculate.getY()){
+                pathValueBasedOnItems = 10;
+            }
+        }
+        //TODO do we need more bombs?
+
+        return destroyingBoxes * pathValueBasedOnItems + (10000d / distance);
     }
 
     public static int willDestroyNBoxs(Bomb bomb, Map<Point, FieldType> map) {
         int destroyedBoxes = 0;
-        for (int i = bomb.getX() - bomb.getExplosionrange(); i < bomb.getX() + bomb.getExplosionrange(); i++) {
+        for (int i = bomb.getX() - bomb.getExplosionrange(); i <= bomb.getX() + bomb.getExplosionrange(); i++) {
             Point p = new Point(i, bomb.getY());
             if (map.containsKey(p) && map.get(p).equals(FieldType.Box)) {
                 destroyedBoxes++;
             }
         }
-        for (int i = bomb.getY() - bomb.getExplosionrange(); i < bomb.getY() + bomb.getExplosionrange(); i++) {
+        for (int i = bomb.getY() - bomb.getExplosionrange(); i <= bomb.getY() + bomb.getExplosionrange(); i++) {
             Point p = new Point(bomb.getX(), i);
             if (map.containsKey(p) && map.get(p).equals(FieldType.Box)) {
                 destroyedBoxes++;
@@ -160,6 +208,19 @@ class Bomb {
     public int getExplosionrange() {
         return explosionrange;
     }
+
+
+    public boolean isInRange(Point p){
+        for(int i = -explosionrange; i <= explosionrange; i++){
+            if(p.equals(new Point(x + i, y))) {
+                return true;
+            }
+            if(p.equals(new Point(x, y + i))) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 class Item{
@@ -188,54 +249,28 @@ class Item{
 
 class FloodFill {
 
-    public Integer numberOfFreeFields(Map<Point, Integer> map, Point player) {
-        Map<Point, Integer> mapClone = new HashMap<>();
-        mapClone.putAll(map);
-        return floodfill(mapClone, -1, -2, player, 0);
-    }
-
-    private int floodfill(Map<Point, Integer> map, int colorToReplace, int colorToPaint, Point p, int replaces) {
-        if (map != null && map.containsKey(p)) {
-            int currentColor = map.get(p);
-            if (currentColor == colorToReplace) {
-                map.put(p, colorToPaint);
-                replaces++;
-                replaces = floodfill(map, colorToReplace, colorToPaint, new Point(p.x + 1, p.y), replaces);
-                replaces = floodfill(map, colorToReplace, colorToPaint, new Point(p.x - 1, p.y), replaces);
-                replaces = floodfill(map, colorToReplace, colorToPaint, new Point(p.x, p.y + 1), replaces);
-                replaces = floodfill(map, colorToReplace, colorToPaint, new Point(p.x, p.y - 1), replaces);
+    public ArrayList<Point> getConnectedPoints(Map<Point, FieldType> map, FieldType fieldType, Point player){
+        Map<Point, FieldType> clone = new HashMap<>(map);
+        Map<Point, FieldType> m = f(map,fieldType,player);
+        ArrayList<Point> points = new ArrayList<>();
+        for(Point p : m.keySet()){
+            if(m.get(p) == null && clone.get(p).equals(fieldType)){
+                if(!points.contains(p))
+                    points.add(p);
             }
         }
-        return replaces;
+        return points;
     }
 
-    public boolean containsEnemyPoint(Map<Point, Integer> map, Point player, Point enemy) {
-        Map<Point, Integer> mapClone = new HashMap<>();
-        mapClone.putAll(map);
-        mapClone.put(player, -1);
-        return getMap(mapClone, -1, -2, player, enemy, false);
-    }
-
-
-    private boolean getMap(Map<Point, Integer> map, int colorToReplace, int colorToPaint, Point p, Point enemy, boolean hasEnemy) {
-        if (hasEnemy)
-            return true;
-        if (map != null && map.containsKey(p)) {
-            if (p.equals(enemy)) return true;
-            int currentColor = map.get(p);
-            if (currentColor == colorToReplace) {
-                map.put(p, colorToPaint);
-                if (getMap(map, colorToReplace, colorToPaint, new Point(p.x + 1, p.y), enemy, hasEnemy))
-                    hasEnemy = true;
-                if (getMap(map, colorToReplace, colorToPaint, new Point(p.x - 1, p.y), enemy, hasEnemy))
-                    hasEnemy = true;
-                if (getMap(map, colorToReplace, colorToPaint, new Point(p.x, p.y + 1), enemy, hasEnemy))
-                    hasEnemy = true;
-                if (getMap(map, colorToReplace, colorToPaint, new Point(p.x, p.y - 1), enemy, hasEnemy))
-                    hasEnemy = true;
-            }
+    private Map<Point, FieldType> f(Map<Point, FieldType> map, FieldType fieldType, Point p){
+        if(map.containsKey(p) && map.get(p) != null && map.get(p).equals(fieldType)){
+            map.put(p, null);
+            map = f(map, fieldType, new Point(p.x + 1, p.y));
+            map = f(map, fieldType, new Point(p.x - 1, p.y));
+            map = f(map, fieldType, new Point(p.x, p.y + 1));
+            map = f(map, fieldType, new Point(p.x, p.y - 1));
         }
-        return hasEnemy;
+        return map;
     }
 }
 
